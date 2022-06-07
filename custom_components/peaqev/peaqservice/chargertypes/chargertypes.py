@@ -16,13 +16,13 @@ class ChargerTypeData:
         self._hass = hass
 
         CHARGERYPEDICT = {
-            CHARGERTYPE_CHARGEAMPS: ChargeAmps(self._hass, chargerid),
-            CHARGERTYPE_EASEE: Easee(self._hass, chargerid),
-            CHARGERTYPE_GAROWALLBOX: GaroWallbox(self._hass, chargerid),
-            CHARGERTYPE_OCPP: OCPP(self._hass, chargerid)
+            CHARGERTYPE_CHARGEAMPS: ChargeAmps,
+            CHARGERTYPE_EASEE: Easee,
+            CHARGERTYPE_GAROWALLBOX: GaroWallbox,
+            CHARGERTYPE_OCPP: OCPP
         }
 
-        self._charger = CHARGERYPEDICT[input_type]
+        self._charger = CHARGERYPEDICT[input_type](self._hass, chargerid)
         self._charger.validatecharger()
 
     @property
