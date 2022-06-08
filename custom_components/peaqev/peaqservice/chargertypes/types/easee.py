@@ -15,17 +15,24 @@ from custom_components.peaqev.peaqservice.util.constants import (
 _LOGGER = logging.getLogger(__name__)
 
 ENTITYENDINGS = [
-    "_power",
-    "_status",
     "_dimmer",
     "_downlight",
-    "_lifetime_energy",
-    "_online",
     "_current",
     "_voltage",
     "_output_limit",
     "_cost_per_kwh",
-    "_enable_idle_current"
+    "_enable_idle_current",
+    "_is_enabled",
+    "_cable_locked_permanently",
+    "_smart_charging",
+    "_max_charger_limit",
+    "_energy_per_hour",
+    "_lifetime_energy",
+    "_session_energy",
+    "_power",
+    "_status",
+    "_online",
+    "_cable_locked"
 ]
 
 NATIVE_CHARGERSTATES = [
@@ -46,19 +53,16 @@ class Easee(ChargerBase):
     def __init__(self, hass: HomeAssistant, chargerid, auth_required: bool = False):
         super().__init__(hass)
         self._chargerid = chargerid
-        self.getentities(DOMAINNAME, ENTITYENDINGS)
+        self._auth_required = auth_required
+        self._domainname = DOMAINNAME
+        self._entityendings = ENTITYENDINGS
         self._native_chargerstates = NATIVE_CHARGERSTATES
         self._chargerstates[CHARGERSTATES.Idle] = ["disconnected"]
         self._chargerstates[CHARGERSTATES.Connected] = ["awaiting_start", "ready_to_charge"]
         self._chargerstates[CHARGERSTATES.Charging] = ["charging"]
         self._chargerstates[CHARGERSTATES.Done] = ["completed"]
-        self.chargerentity = f"sensor.{self._entityschema}_status"
-        self.powermeter = f"sensor.{self._entityschema}_power"
-        self.powermeter_factor = 1000
-        self.powerswitch = f"switch.{self._entityschema}_is_enabled"
-        self.ampmeter = f"sensor.{self._entityschema}_max_charger_limit"
-        self.ampmeter_is_attribute = False
-        self._auth_required = auth_required
+        self.getentities()
+        self.set_sensors()
 
         servicecall_params = {
             CHARGER: "charger_id",
@@ -84,3 +88,11 @@ class Easee(ChargerBase):
             update_current_call="set_charger_dynamic_limit",
             update_current_params=servicecall_params
         )
+
+    def set_sensors(self):
+        self.chargerentity = f"sensor.{self._entityschema}_status"
+        self.powermeter = f"sensor.{self._entityschema}_power"
+        self.powermeter_factor = 1000
+        self.powerswitch = f"switch.{self._entityschema}_is_enabled"
+        self.ampmeter = f"sensor.{self._entityschema}_max_charger_limit"
+        self.ampmeter_is_attribute = False

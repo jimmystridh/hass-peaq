@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime
 
 from homeassistant.core import (
@@ -58,6 +59,10 @@ class Hub(HubBase, HubData):
 
         async_track_state_change(hass, trackerEntities, self.state_changed)
 
+
+    initialized_log_last_logged = 0
+    not_ready_list_old_state = 0
+
     @property
     def is_initialized(self) -> bool:
         ret = {"hours": self.hours.is_initialized,
@@ -68,13 +73,17 @@ class Hub(HubBase, HubData):
                }
         if all(ret.values()):
             return True
-        else:
-            notready = []
-            for r in ret:
-                if ret[r] is False:
-                    notready.append(r)
-            _LOGGER.warning(f"{notready} has not initialized yet.")
-            return False
+        not_ready = []
+        for r in ret:
+            if ret[r] is False:
+                not_ready.append(r)
+        if len(not_ready) != self.not_ready_list_old_state or self.initialized_log_last_logged - time.time() > 30:
+            _LOGGER.warning(f"{not_ready} has not initialized yet.")
+            self.not_ready_list_old_state = len(not_ready)
+            self.initialized_log_last_logged = time.time()
+        if "chargerobject" in not_ready:
+            self.chargertype.charger.getentities()
+        return False
 
     @property
     def current_peak_dynamic(self):

@@ -1,6 +1,7 @@
 import logging
 # import homeassistant.helpers.template as template
 import time
+from abc import abstractmethod
 
 from peaqevcore.Models import CHARGERSTATES
 
@@ -13,6 +14,8 @@ _LOGGER = logging.getLogger(__name__)
 class ChargerBase:
     def __init__(self, hass):
         self._hass = hass
+        self._domainname = ""
+        self._entityendings = None
         self._chargerEntity = None
         self._powermeter = None
         self.powermeter_factor = 1
@@ -120,33 +123,50 @@ class ChargerBase:
         }
         _LOGGER.info(debugprint)
 
-    def _get_entities_fallback(self, domain_name):
+    def _get_entities_fallback(self, domain_name) -> list:
         from homeassistant.helpers.entity import entity_sources
 
         ret = [
             entity_id
             for entity_id, info in entity_sources(self._hass).items()
             if info["domain"] == domain_name
+               or info["domain"] == domain_name.capitalize()
+               or info["domain"] == domain_name.upper()
+               or info["domain"] == domain_name.lower()
         ]
         return ret
 
-    def getentities(self, domain: str, endings: list):
-        #entities = template.integration_entities(self._hass, domain)
-        entities = self._get_entities_fallback(domain)
+    def getentities(self, domain: str = None, endings: list = None):
+        if len(self._entityschema) < 1:
+            domain = self._domainname if domain is None else domain
+            endings = self._entityendings if endings is None else endings
 
-        if len(entities) < 1:
-            msg = f"no entities found for {domain} at {time.time()}"
-            _LOGGER.error(msg)
-        else:
-            _endings = endings
-            namelrg = entities[0].split(".")
-            candidate = ""
+            entities = self._get_entities_fallback(domain)
 
-            for e in _endings:
-                if namelrg[1].endswith(e):
-                    candidate = namelrg[1].replace(e, '')
+            if len(entities) < 1:
+                msg = f"no entities found for {domain} at {time.time()}"
+                _LOGGER.error(msg)
+            else:
+                msg = f"entities discovered for {domain} are: {entities}"
+                _LOGGER.info(msg)
+                _endings = endings
+                candidate = ""
 
-            self._entityschema = candidate
-            msg = f"entityschema is: {self._entityschema} at {time.time()}"
-            _LOGGER.info(msg)
-            self._entities = entities
+                for e in entities:
+                    splitted = e.split(".")
+                    for ending in _endings:
+                        if splitted[1].endswith(ending):
+                            candidate = splitted[1].replace(ending, '')
+                            break
+                    if len(candidate) > 1:
+                        break
+
+                self._entityschema = candidate
+                msg = f"entityschema is: {self._entityschema} at {time.time()}"
+                _LOGGER.info(msg)
+                self._entities = entities
+                self.set_sensors()
+
+    @abstractmethod
+    def set_sensors(self):
+        pass
