@@ -18,6 +18,7 @@ class ChargerBase:
         self._entityendings = None
         self._chargerEntity = None
         self._powermeter = None
+        self._native_chargerstates = []
         self.powermeter_factor = 1
         self._powerswitch = None
         self.ampmeter = None
@@ -121,7 +122,7 @@ class ChargerBase:
             "servicecalls_pause": self.servicecalls.pause,
             "updatecurrent": self.servicecalls.update_current.call
         }
-        _LOGGER.info(debugprint)
+        _LOGGER.debug(debugprint)
 
     def _get_entities_fallback(self, domain_name) -> list:
         from homeassistant.helpers.entity import entity_sources
@@ -148,7 +149,7 @@ class ChargerBase:
                 _LOGGER.error(msg)
             else:
                 msg = f"entities discovered for {domain} are: {entities}"
-                _LOGGER.info(msg)
+                _LOGGER.debug(msg)
                 _endings = endings
                 candidate = ""
 
@@ -163,7 +164,7 @@ class ChargerBase:
 
                 self._entityschema = candidate
                 msg = f"entityschema is: {self._entityschema} at {time.time()}"
-                _LOGGER.info(msg)
+                _LOGGER.debug(msg)
                 self._entities = entities
                 self.set_sensors()
 

@@ -49,7 +49,7 @@ class ChargeControllerBase:
         ret = CHARGERSTATES.Error
         update_timer = False
         charger_state = self._hub.chargerobject.value.lower()
-        free_charge = self._hub.locale.data.free_charge
+        free_charge = self._hub.locale.data.free_charge(self._hub.locale.data)
 
         if charger_state in self._hub.chargertype.charger.chargerstates[CHARGERSTATES.Done]:
             self._hub.charger_done.value = True
@@ -80,7 +80,6 @@ class ChargeControllerBase:
 
         if update_timer is True:
             self.update_latestchargerstart()
-
         return ret
 
     @abstractmethod

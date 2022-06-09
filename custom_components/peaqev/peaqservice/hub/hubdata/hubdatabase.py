@@ -8,7 +8,7 @@ from custom_components.peaqev.peaqservice.chargertypes.chargertypes import Charg
 from custom_components.peaqev.peaqservice.hub.hubmember.chargerswitch import ChargerSwitch
 from custom_components.peaqev.peaqservice.hub.hubmember.hubmember import CurrentPeak, HubMember, CarPowerSensor, \
     ChargerObject
-from custom_components.peaqev.peaqservice.localetypes.locale import LocaleData
+from custom_components.peaqev.peaqservice.locale import LocaleData
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,13 +46,7 @@ class HubDataBase:
             data_type=float,
             listenerentity=self.locale.current_peak_entity,
             initval=0,
-            startpeaks=config_inputs["startpeaks"]
-        )
-        self.carpowersensor = CarPowerSensor(
-            data_type=int,
-            listenerentity=self.chargertype.charger.powermeter,
-            #initval=0,
-            powermeter_factor=self.chargertype.charger.powermeter_factor
+            startpeaks=config_inputs["startpeaks"],
         )
         self.chargerobject = ChargerObject(
             data_type=self.chargertype.charger.native_chargerstates,
@@ -60,13 +54,22 @@ class HubDataBase:
         )
         resultdict[self.chargerobject.entity] = self.chargerobject.is_initialized
 
+        self.carpowersensor = CarPowerSensor(
+            data_type=int,
+            listenerentity=self.chargertype.charger.powermeter,
+            #initval=0,
+            powermeter_factor=self.chargertype.charger.powermeter_factor,
+            hubdata=self
+        )
+
         self.chargerobject_switch = ChargerSwitch(
             hass=hass,
             data_type=bool,
             listenerentity=self.chargertype.charger.powerswitch,
             initval=False,
             currentname=self.chargertype.charger.ampmeter,
-            ampmeter_is_attribute=self.chargertype.charger.ampmeter_is_attribute
+            ampmeter_is_attribute=self.chargertype.charger.ampmeter_is_attribute,
+            hubdata=self
         )
         self.charger = Charger(
             self,
@@ -74,7 +77,7 @@ class HubDataBase:
             self.chargertype.charger.servicecalls
         )
 
-        _LOGGER.info(self.chargertype.charger.chargerentity)
+        _LOGGER.debug(self.chargertype.charger.chargerentity)
 
     @abstractmethod
     def init_hub_values(self):
