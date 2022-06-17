@@ -21,6 +21,7 @@ class ChargerBase:
         self._native_chargerstates = []
         self.powermeter_factor = 1
         self._powerswitch = None
+        self._powerswitch_controls_charging = True
         self.ampmeter = None
         self.ampmeter_is_attribute = None
         self._servicecalls = None
@@ -32,6 +33,10 @@ class ChargerBase:
         }
         self._entityschema = ""
         self._entities = None
+
+    @property
+    def powerswitch_controls_charging(self) -> bool:
+        return self._powerswitch_controls_charging
 
     @property
     def chargerstates(self) -> dict:
@@ -81,7 +86,8 @@ class ChargerBase:
             resume_call: CallType = None,
             allowupdatecurrent: bool = False,
             update_current_call: str = None,
-            update_current_params: dict = None
+            update_current_params: dict = None,
+            update_current_on_termination: bool = False
     ) -> None:
         self._servicecalls = ServiceCalls(
             domain,
@@ -91,7 +97,8 @@ class ChargerBase:
             resume_call,
             allowupdatecurrent,
             update_current_call,
-            update_current_params
+            update_current_params,
+            update_current_on_termination
         )
 
     def validatecharger(self):

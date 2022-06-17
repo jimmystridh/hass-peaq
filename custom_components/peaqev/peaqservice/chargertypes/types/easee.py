@@ -46,6 +46,7 @@ NATIVE_CHARGERSTATES = [
 
 DOMAINNAME = "easee"
 UPDATECURRENT = True
+UPDATECURRENT_ON_TERMINATION = False
 #docs: https://github.com/fondberg/easee_hass
 
 
@@ -54,6 +55,7 @@ class Easee(ChargerBase):
         super().__init__(hass)
         self._chargerid = chargerid
         self._auth_required = auth_required
+        self._powerswitch_controls_charging = False
         self._domainname = DOMAINNAME
         self._entityendings = ENTITYENDINGS
         self._native_chargerstates = NATIVE_CHARGERSTATES
@@ -74,8 +76,8 @@ class Easee(ChargerBase):
 
         _on = CallType("start", _on_off_params, CALL)
         _off = CallType("stop", _on_off_params, CALL)
-        _resume = CallType("set_charger_dynamic_limit", {"mode": "6", "charger_id": self._chargerid})
-        _pause = CallType("set_charger_dynamic_limit", {"mode": "0", "charger_id": self._chargerid})
+        _resume = CallType("set_charger_dynamic_limit", {"current": "7", "charger_id": self._chargerid})
+        _pause = CallType("set_charger_dynamic_limit", {"current": "0", "charger_id": self._chargerid})
 
         self._set_servicecalls(
             domain=DOMAINNAME,
@@ -86,13 +88,26 @@ class Easee(ChargerBase):
             resume_call=_resume,
             allowupdatecurrent=UPDATECURRENT,
             update_current_call="set_charger_dynamic_limit",
-            update_current_params=servicecall_params
+            update_current_params=servicecall_params,
+            update_current_on_termination = UPDATECURRENT_ON_TERMINATION
         )
 
     def set_sensors(self):
+        amp_sensor = f"sensor.{self._entityschema}_dynamic_charger_limit"
+        if not self._validate_sensor(amp_sensor):
+            amp_sensor = f"sensor.{self._entityschema}_max_charger_limit"
+
         self.chargerentity = f"sensor.{self._entityschema}_status"
         self.powermeter = f"sensor.{self._entityschema}_power"
         self.powermeter_factor = 1000
         self.powerswitch = f"switch.{self._entityschema}_is_enabled"
-        self.ampmeter = f"sensor.{self._entityschema}_max_charger_limit"
+        self.ampmeter = amp_sensor
         self.ampmeter_is_attribute = False
+
+    def _validate_sensor(self, sensor: str) -> bool:
+        ret = self._hass.states.get(sensor)
+        if ret is None:
+            return False
+        elif ret.state == "Null":
+            return False
+        return True
