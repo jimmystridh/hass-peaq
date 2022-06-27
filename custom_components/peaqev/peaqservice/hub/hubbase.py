@@ -10,6 +10,7 @@ import custom_components.peaqev.peaqservice.util.extensionmethods as ex
 from custom_components.peaqev.peaqservice.hourselection import (PriceAwareHours, RegularHours)
 from custom_components.peaqev.peaqservice.hub.hubmember.hubmember import HubMember
 from custom_components.peaqev.peaqservice.util.constants import CHARGERENABLED, CHARGERDONE
+from custom_components.peaqev.peaqservice.util.timer import Timer
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class HubBase:
         self.domain = domain
         self.price_aware = config_inputs["priceaware"]
         self.peaqtype_is_lite = config_inputs["peaqtype_is_lite"]
+        self.timer = Timer()
 
         if self.price_aware is True:
             self.hours = PriceAwareHours(
@@ -36,7 +38,8 @@ class HubBase:
                 absolute_top_price=config_inputs["absolute_top_price"],
                 cautionhour_type=config_inputs["cautionhour_type"],
                 min_price=config_inputs["min_price"],
-                hub=self
+                hub=self,
+                allow_top_up=config_inputs["allow_top_up"]
             )
         else:
             self.hours = RegularHours(
@@ -81,3 +84,7 @@ class HubBase:
         """peaqev.disable"""
         self.charger_enabled.value = False
         self.charger_done.value = False
+
+    async def call_override_nonhours(self, hours:int=1):
+        """peaqev.override_nonhours"""
+        self.timer.update(hours)

@@ -52,6 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, conf: ConfigEntry) -> bool:
         ci["absolute_top_price"] = await _get_existing_param(conf, "absolute_top_price", 0)
         ci["min_price"] = await _get_existing_param(conf, "min_priceaware_threshold_price", 0)
         ci["cautionhour_type"] = conf.options["cautionhour_type"] if "cautionhour_type" in conf.options.keys() else conf.data["cautionhour_type"]
+        ci["allow_top_up"] = await _get_existing_param(conf, "allow_top_up", False)
 
     if peaqtype_is_lite is True:
         hub = HubLite(hass, ci, DOMAIN)
@@ -69,8 +70,17 @@ async def async_setup_entry(hass: HomeAssistant, conf: ConfigEntry) -> bool:
     async def servicehandler_disable(call): # pylint:disable=unused-argument
         await hub.call_disable_peaq()
 
+    ATTR_HOURS = "hours"
+    async def servicehandler_override_nonhours(call): # pylint:disable=unused-argument
+        try:
+            hours = call.data.get(ATTR_HOURS)
+        except:
+            hours = 1
+        await hub.call_override_nonhours(hours)
+
     hass.services.async_register(DOMAIN, "enable", servicehandler_enable)
     hass.services.async_register(DOMAIN, "disable", servicehandler_disable)
+    hass.services.async_register(DOMAIN, "override_nonhours", servicehandler_override_nonhours)
 
     hass.config_entries.async_setup_platforms(conf, PLATFORMS)
 
@@ -82,6 +92,7 @@ async def async_setup_entry(hass: HomeAssistant, conf: ConfigEntry) -> bool:
     return True
 
 async def config_entry_update_listener(hass: HomeAssistant, conf: ConfigEntry):
+    _LOGGER.debug("Trying to reboot after options-change.")
     await hass.config_entries.async_reload(conf.entry_id)
 
 async def async_unload_entry(hass: HomeAssistant, conf: ConfigEntry) -> bool:

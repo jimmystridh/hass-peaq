@@ -33,8 +33,7 @@ class HubLite(HubBase, HubDataLite):
 
         trackerEntities = [
             self.chargerobject_switch.entity,
-            self.totalhourlyenergy.entity,
-            self.currentpeak.entity
+            self.totalhourlyenergy.entity
         ]
 
         self.chargingtracker_entities = [
@@ -64,7 +63,7 @@ class HubLite(HubBase, HubDataLite):
     @property
     def current_peak_dynamic(self):
         if self.price_aware is True and len(self.hours.dynamic_caution_hours):
-            if datetime.now().hour in self.hours.dynamic_caution_hours.keys():
+            if datetime.now().hour in self.hours.dynamic_caution_hours.keys() and self.timer.is_override is False:
                 return self.currentpeak.value * self.hours.dynamic_caution_hours[datetime.now().hour]
         return self.currentpeak.value
 

@@ -1,7 +1,7 @@
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.const import CONF_NAME
-from peaqevcore.Locale import LOCALES
+from peaqevcore.locale_service.Locale import LOCALES
 
 import custom_components.peaqev.peaqservice.util.constants as pk
 
@@ -48,6 +48,7 @@ HOURS_SCHEMA = vol.Schema(
 PRICEAWARE_SCHEMA = vol.Schema(
                 {
                     vol.Optional("priceaware", default=False): cv.boolean,
+                    vol.Optional("allow_top_up", default=False): cv.boolean,
                     vol.Optional("absolute_top_price"): cv.positive_float,
                     vol.Optional("min_priceaware_threshold_price"): cv.positive_float,
                     vol.Optional(

@@ -38,7 +38,7 @@ class Hub(HubBase, HubData):
         trackerEntities = [
             self.configpower_entity,
             self.totalhourlyenergy.entity,
-            self.currentpeak.entity
+            # self.currentpeak.entity
         ]
 
         self.chargingtracker_entities = [
@@ -56,7 +56,6 @@ class Hub(HubBase, HubData):
                 self.chargingtracker_entities.append(self.hours.nordpool_entity)
 
         trackerEntities += self.chargingtracker_entities
-
         async_track_state_change(hass, trackerEntities, self.state_changed)
 
 
@@ -89,7 +88,7 @@ class Hub(HubBase, HubData):
     @property
     def current_peak_dynamic(self):
         if self.price_aware is True and len(self.hours.dynamic_caution_hours):
-            if datetime.now().hour in self.hours.dynamic_caution_hours.keys():
+            if datetime.now().hour in self.hours.dynamic_caution_hours.keys() and self.timer.is_override is False:
                 return self.currentpeak.value * self.hours.dynamic_caution_hours[datetime.now().hour]
         return self.currentpeak.value
 
@@ -104,10 +103,10 @@ class Hub(HubBase, HubData):
         elif entity == self.chargerobject_switch.entity:
             self.chargerobject_switch.value = value
             self.chargerobject_switch.updatecurrent()
-        elif entity == self.currentpeak.entity:
-            self.currentpeak.value = value
         elif entity == self.totalhourlyenergy.entity:
             self.totalhourlyenergy.value = value
+            self.currentpeak.value = self.locale.data.query_model.observed_peak
+            self.locale.data.query_model.try_update(float(value))
         elif entity == self.powersensormovingaverage.entity:
             self.powersensormovingaverage.value = value
         elif entity == self.hours.nordpool_entity:
