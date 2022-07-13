@@ -79,9 +79,27 @@ async def async_setup_entry(hass: HomeAssistant, conf: ConfigEntry) -> bool:
         hours = call.data.get("hours")
         await hub.call_override_nonhours(1 if hours is None else hours)
 
+    async def servicehandler_scheduler_set(call): # pylint:disable=unused-argument
+        charge_amount = call.data.get("charge_amount")
+        departure_time = call.data.get("departure_time")
+        schedule_starttime = call.data.get("schedule_starttime")
+        override_settings = call.data.get("override_settings")
+        await hub.call_schedule_needed_charge(
+            charge_amount=charge_amount,
+            departure_time=departure_time,
+            schedule_starttime=schedule_starttime,
+            override_settings=override_settings
+        )
+
+    async def servicehandler_scheduler_cancel(call):
+        await hub.call_scheduler_cancel()
+
     hass.services.async_register(DOMAIN, "enable", servicehandler_enable)
     hass.services.async_register(DOMAIN, "disable", servicehandler_disable)
     hass.services.async_register(DOMAIN, "override_nonhours", servicehandler_override_nonhours)
+    hass.services.async_register(DOMAIN, "scheduler_set", servicehandler_scheduler_set)
+    hass.services.async_register(DOMAIN, "scheduler_cancel", servicehandler_scheduler_cancel)
+
 
     hass.config_entries.async_setup_platforms(conf, PLATFORMS)
 

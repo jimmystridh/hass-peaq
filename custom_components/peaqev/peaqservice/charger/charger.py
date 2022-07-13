@@ -31,11 +31,11 @@ class Charger:
         self._session_is_active = False
         self._latest_charger_call = 0
         self._repeat_is_running = False
-        self._session = Session(self)
+        self.session = Session(self)
 
     @property
     def _chargertype_charger_is_on(self) -> bool:
-        if self._hub.chargertype.charger.powerswitch_controls_charging:
+        if self._hub.chargertype.charger.options.powerswitch_controls_charging:
             return self._hub.chargerobject_switch.value
         return all(
             [
@@ -44,11 +44,20 @@ class Charger:
             ]
         )
 
+    @property
+    def session_is_active(self) -> bool:
+        return self._session_is_active
+
+    @session_is_active.setter
+    def session_is_active(self, val):
+        self._session_is_active = val
+
     async def charge(self):
         """Main function to turn charging on or off"""
         if self._repeat_is_running:
             await self._is_running(False)
         if self._hub.charger_enabled.value is True:
+            self.session_is_active = True
             if self._hub.chargecontroller.status is CHARGERSTATES.Start.name:
                 if self._chargertype_charger_is_on is False and self._charger_running is False:
                     await self._start_charger()
@@ -75,11 +84,12 @@ class Charger:
             else:
                 await self._call_charger(RESUME)
             self._hub.chargecontroller.update_latestchargerstart()
-            if self._hub.chargertype.charger.servicecalls.allowupdatecurrent is True and self._hub.locale.data.free_charge(self._hub.locale.data) is False:
+            if self._hub.chargertype.charger.servicecalls.options.allowupdatecurrent is True and self._hub.locale.data.free_charge(self._hub.locale.data) is False:
                 self._hass.async_create_task(self._updatemaxcurrent())
 
     async def _terminate_charger(self):
         if time.time() - self._latest_charger_call > CALL_WAIT_TIMER:
+            self.session_is_active = False
             await self._is_running(False)
             self._session_is_active = False
             await self._call_charger(OFF)
@@ -121,7 +131,7 @@ class Charger:
                     )
                     await self._hass.async_add_executor_job(self._wait_loop_cycle)
 
-            if self._service_calls.allow_update_current_on_termination:
+            if self._hub.chargertype.charger.servicecalls.options.update_current_on_termination:
                 final_service_params = await self._setchargerparams(calls, ampoverride=6)
                 await self._hub.hass.services.async_call(
                     calls[DOMAIN],

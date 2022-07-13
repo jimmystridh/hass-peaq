@@ -69,7 +69,7 @@ KEBA = "Keba"
 CHARGERTYPES = [
     CHARGERTYPE_CHARGEAMPS,
     CHARGERTYPE_EASEE,
-    CHARGERTYPE_GAROWALLBOX,
+    #CHARGERTYPE_GAROWALLBOX,
     KEBA
     ]
 
@@ -87,6 +87,7 @@ CONSUMPTION_TOTAL_NAME = "Energy including car"
 CHARGERENABLED = "Charger enabled"
 CHARGERDONE = "Charger done"
 AVERAGECONSUMPTION = "Average consumption"
+AVERAGECONSUMPTION_24H = "Average consumption 24h"
 THRESHOLD = "Threshold"
 SQLSENSOR_BASENAME = "Monthly max peak"
 SQLSENSOR_AVERAGEOFTHREE = "Average of three"
